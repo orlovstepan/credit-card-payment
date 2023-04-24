@@ -12,31 +12,22 @@ const initialState = {
   },
   expiryDate: {
     value: "",
-    isError: false
+    isError: false,
   },
   CVC: {
     value: '',
     isError: false,
   },
-
 }
 
 export default function CreditCardForm() {
 
   const [details, setDetails] = useState<typeof initialState>(initialState);
+  const [flag, setFlag] = useState(false);
 
   const validateCardNumber = (str: string) => {
-    const cardNumber = str.replace(/\D/, '');
+    const cardNumber = str.replace(/\D/g, '');
     const formattedCardNumber = cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
-    // return formattedCardNumber;
-    // let formattedCardNumber = '';
-    // for (let i=0;i<str.length;i++){
-    //   if(i%4===0){
-    //     // formattedCardNumber += ""
-    //     console.log("NOW")
-    //   }
-    //   formattedCardNumber += str[i]
-    // }
     return formattedCardNumber;
   }
   const validateName = (str: string) => {
@@ -47,6 +38,16 @@ export default function CreditCardForm() {
     const date = str.replace(/\D/, '');
     const formattedDate = date.replace(/(\d{2})(?=\d)/g, "$1/")
     return formattedDate
+  }
+
+  const formValidate = () => {
+    // FINISH HERE
+    const name = details.name.value.split(' ');
+    if (name.length !== 2){
+      setDetails({...details, name: {...details.name, isError: true}})
+      setFlag(true);
+    }
+    // IF ERROR, FOCUS THE FIELD WITH ERROR
   }
 
   const handleChange = (e: any) => {
@@ -66,12 +67,14 @@ export default function CreditCardForm() {
     }
     setDetails({
       ...details,
-      [field]: { ...details[field], value }
+      [field]: { ...details[field], value, isError: false }
     })
+    setFlag(false);
   }
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
+    formValidate();
   }
 
   return (
@@ -84,6 +87,7 @@ export default function CreditCardForm() {
         <div className= {styles["name"]}>
           <label htmlFor="name" > Full Name </label>
           <input type='text' placeholder="ALEX SMITH" id="name" value={details.name.value} />
+          {details.name.isError &&  <p style={{color: 'red'}}>is error</p>}
         </div>
         <div className={styles["card-number"]}>
           <label htmlFor="cardNumber"> Card Number </label>
