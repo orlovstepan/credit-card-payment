@@ -1,5 +1,15 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import styles from "./CreditCardForm.module.css"
+import SuccessModal from "./SuccessModal";
+
+type InputRefsType = {
+  name: HTMLInputElement | null;
+  cardNumber: HTMLInputElement | null;
+  expiryDate: HTMLInputElement | null;
+  CVC: HTMLInputElement | null;
+};
+
+type DetailField = 'name' | 'cardNumber' | 'expiryDate' | 'CVC';
 
 const initialState = {
   cardNumber: {
@@ -23,7 +33,14 @@ const initialState = {
 export default function CreditCardForm() {
 
   const [details, setDetails] = useState<typeof initialState>(initialState);
-  const [flag, setFlag] = useState(false);
+  const [flag, setFlag] = useState<boolean>(false);
+  const [success, setSuccess] = useState<boolean>(false);
+  const inputRefs = useRef<InputRefsType>({
+    name: null,
+    cardNumber: null,
+    expiryDate: null,
+    CVC: null,
+  });
 
   const validateCardNumber = (str: string) => {
     const cardNumber = str.replace(/\D/g, '');
@@ -40,14 +57,36 @@ export default function CreditCardForm() {
     return formattedDate
   }
 
+  const updateDetailsError = (field: DetailField, isError: boolean) => {
+    setDetails({ ...details, [field]: { ...details[field], isError } });
+    inputRefs.current[field]?.focus();
+  };
+
   const formValidate = () => {
-    // FINISH HERE
+    
     const name = details.name.value.split(' ');
-    if (name.length !== 2){
-      setDetails({...details, name: {...details.name, isError: true}})
+    const cardNumber = details.cardNumber.value.split(' ').join('');
+    const expiryDate = details.expiryDate.value.split('/');
+    console.log(Number(expiryDate[0])>12);
+    console.log(Number(expiryDate[1])<22);
+    
+    if(!details.name.value || !details.cardNumber.value || !details.CVC.value || !details.expiryDate.value){
       setFlag(true);
+      return;
+    } 
+
+    if (name.length !== 2 || name[0].length < 2 || name[1].length < 2){
+      updateDetailsError('name', true);
+    } else if (cardNumber.length !== 16){
+      updateDetailsError('cardNumber', true);
+    } else if (details.expiryDate.value.length !==5 || Number(expiryDate[0])>12 || Number(expiryDate[1])<23){
+      updateDetailsError('expiryDate', true);
+    } else if (details.CVC.value.length !==3){
+      updateDetailsError('CVC', true);
+    } else {
+      setSuccess(true);
     }
-    // IF ERROR, FOCUS THE FIELD WITH ERROR
+
   }
 
   const handleChange = (e: any) => {
@@ -77,6 +116,12 @@ export default function CreditCardForm() {
     formValidate();
   }
 
+  const handleCloseModal = () => {
+    setSuccess(false);
+    setDetails(initialState);
+  }
+  
+
   return (
     <div className={styles["form-container"]}>
       <section className={styles["top-section"]}> 
@@ -86,25 +131,30 @@ export default function CreditCardForm() {
       <form className={styles['form']} onChange={handleChange}>
         <div className= {styles["name"]}>
           <label htmlFor="name" > Full Name </label>
-          <input type='text' placeholder="ALEX SMITH" id="name" value={details.name.value} />
-          {details.name.isError &&  <p style={{color: 'red'}}>is error</p>}
+          <input ref={(el) => (inputRefs.current.name = el)} type='text' placeholder="ALEX SMITH" id="name" value={details.name.value} />
+          {details.name.isError &&  <p className={styles["error"]}>Please check your name</p>}
         </div>
         <div className={styles["card-number"]}>
           <label htmlFor="cardNumber"> Card Number </label>
-          <input type="text" id="cardNumber" placeholder="1234 1234 1234 1234" maxLength={19} value={details.cardNumber.value} />
+          <input ref={(el) => (inputRefs.current.cardNumber = el)} type="text" id="cardNumber" placeholder="1234 1234 1234 1234" maxLength={19} value={details.cardNumber.value} />
+          {details.cardNumber.isError &&  <p className={styles["error"]}>Please check your card number</p>}
         </div>
         <div className={styles["date-cvc"]}>
           <div className={styles["date"]}>
             <label htmlFor="expiryDate"> Valid till </label>
-            <input maxLength={5} id="expiryDate" placeholder="MM/YY" value={details.expiryDate.value}></input>
+            <input ref={(el) => (inputRefs.current.expiryDate = el)} maxLength={5} id="expiryDate" placeholder="MM/YY" value={details.expiryDate.value}></input>
+            {details.expiryDate.isError &&  <p className={styles["error"]}>Please check your expiry date</p>}
           </div>
           <div className={styles["cvc"]}>
             <label htmlFor="CVC"> CVC </label>
-            <input type="text" id="CVC" maxLength={3} placeholder="***" value={details.CVC.value} />
+            <input ref={(el) => (inputRefs.current.CVC = el)} type="password" id="CVC" maxLength={3} placeholder="***" value={details.CVC.value} />
+            {details.CVC.isError &&  <p className={styles["error"]}>Please check your CVC</p>}
           </div>
         </div>
+        {flag && <p className={styles["error"]}> Please fill out all the fields </p>}
         <button onClick={handleSubmit} className={styles['submit-button']}>Submit</button>
       </form>
+      {success && <SuccessModal handleCloseModal={handleCloseModal} />}
     </div>
   )
 }

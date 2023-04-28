@@ -67,8 +67,8 @@ input{
 
 .submit-button{
   font-family: 'Roboto', sans-serif;
-  margin-top: 10%;
   align-self: center;
+  margin-top: 3%;
   width: 100%;
   height: 5vh;
   font-size: 0.9rem;
@@ -78,4 +78,9 @@ input{
   background: #288FB4;
   border-radius: 10px;
   flex: none;
+}
+
+.error{
+  margin:0;
+  color: rgb(215, 73, 73)
 }
